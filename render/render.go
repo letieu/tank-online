@@ -7,7 +7,7 @@ import (
 )
 
 type Render struct {
-	screen tcell.Screen
+	Screen tcell.Screen
 	styles map[string]tcell.Style
 }
 
@@ -15,6 +15,7 @@ func NewRender() *Render {
 	styles := map[string]tcell.Style{
 		"background": tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color17),
 		"my_tank":    tcell.StyleDefault.Background(tcell.Color190).Foreground(tcell.Color190),
+        "bullet":     tcell.StyleDefault.Background(tcell.Color122).Foreground(tcell.Color122),
 	}
 
 	screen, err := tcell.NewScreen()
@@ -27,7 +28,7 @@ func NewRender() *Render {
 		panic(err)
 	}
 
-	return &Render{screen: screen, styles: styles}
+	return &Render{Screen: screen, styles: styles}
 }
 
 func (r *Render) DrawBackground() {
@@ -35,7 +36,13 @@ func (r *Render) DrawBackground() {
 }
 
 func (r *Render) DrawTanks(game *game.Game) {
-	r.screen.SetContent(game.MyTank.Pos.X, game.MyTank.Pos.Y, ' ', nil, r.styles["my_tank"])
+	r.Screen.SetContent(game.MyTank.Pos.X, game.MyTank.Pos.Y, ' ', nil, r.styles["my_tank"])
+}
+
+func (r *Render) DrawBullets(game *game.Game) {
+	for _, bullet := range game.Bullets {
+		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, ' ', nil, r.styles["bullet"])
+	}
 }
 
 func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
@@ -48,15 +55,15 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 
 	for row := y1; row <= y2; row++ {
 		for col := x1; col <= x2; col++ {
-			r.screen.SetContent(col, row, ' ', nil, style)
+			r.Screen.SetContent(col, row, ' ', nil, style)
 		}
 	}
 }
 
 func (r *Render) ClearScreen() {
-	r.screen.Clear()
+	r.Screen.Clear()
 }
 
 func (r *Render) ShowScreen() {
-	r.screen.Show()
+	r.Screen.Show()
 }

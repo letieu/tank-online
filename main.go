@@ -6,24 +6,34 @@ import (
 	"time"
 )
 
-const (
-	Up    = 1
-	Down  = -1
-	Left  = 2
-	Right = -2
-)
+const frameRate = 60
+const frameTime = time.Second / frameRate
 
 func main() {
 	render := render.NewRender()
-	game := game.NewGame()
+	windowWidth, windowHeight := render.Screen.Size()
+
+	game := game.NewGame(windowWidth, windowHeight)
+
+	go game.ListenKeys(render.Screen)
 
 	for {
+		now := time.Now()
+
 		render.ClearScreen()
 		render.DrawBackground()
 		game.Tick()
 		render.DrawTanks(&game)
+		render.DrawBullets(&game)
 		render.ShowScreen()
 
-		time.Sleep(time.Millisecond * 100) // TODO: if online, this not good
+		waitForFrame(now)
+	}
+}
+
+func waitForFrame(startTime time.Time) {
+	elapsed := time.Since(startTime)
+	if elapsed < frameTime {
+		time.Sleep(frameTime - elapsed)
 	}
 }
