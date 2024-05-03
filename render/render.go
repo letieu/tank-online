@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"tieu/learn/tank/game"
 
 	"github.com/gdamore/tcell"
@@ -42,6 +43,7 @@ func NewRender() *Render {
 		"my_tank":    tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color190),
 		"enemy_tank": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color50),
 		"bullet":     tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color122),
+		"score":      tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed),
 	}
 
 	screen, err := tcell.NewScreen()
@@ -69,6 +71,15 @@ func (r *Render) DrawTanks(g *game.Game) {
 	for _, tank := range g.EnemyTanks {
 		r.drawTank(tank, "enemy_tank")
 	}
+}
+
+func (r *Render) DrawScores(g *game.Game) {
+	r.DrawText(1, 1, fmt.Sprintf("Kills: %d", g.Kills), r.styles["score"])
+}
+
+func (r *Render) DrawEnd(g *game.Game) {
+	r.DrawText(r.Width/2-5, r.Height/2, "You are dead!", r.styles["score"])
+	r.DrawText(r.Width/2-5, r.Height/2+1, fmt.Sprintf("Kills: %d", g.Kills), r.styles["score"])
 }
 
 func (r *Render) drawTank(t *game.Tank, style string) {
@@ -105,6 +116,12 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 		for col := x1; col <= x2; col++ {
 			r.Screen.SetContent(col, row, ' ', nil, style)
 		}
+	}
+}
+
+func (r *Render) DrawText(x, y int, text string, style tcell.Style) {
+	for i, c := range text {
+		r.Screen.SetContent(x+i, y, c, nil, style)
 	}
 }
 

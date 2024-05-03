@@ -115,6 +115,7 @@ type Game struct {
 	MyTank  *Tank
 	Bullets []*Bullet
 	Dead    bool
+	Kills   int
 
 	Width  int
 	Height int
@@ -238,6 +239,8 @@ func (g *Game) handleEnemyTanks() []*Tank {
 
 		if !isHit {
 			remainEnemyTanks = append(remainEnemyTanks, enemyTank)
+		} else {
+			g.Kills++
 		}
 	}
 	return remainEnemyTanks
@@ -272,7 +275,7 @@ func (g *Game) handleEnemyBullets() []*Bullet {
 }
 
 func (g *Game) newEnemyTank() *Tank {
-    randomX := rand.Intn(g.Width)
-    randomY := rand.Intn(g.Height)
+	randomX := rand.Intn(g.Width)
+	randomY := rand.Intn(g.Height)
 	return &Tank{Pos: &Pos{X: randomX, Y: randomY}, Direction: Right, Speed: 20, FireSpeed: 10}
 }

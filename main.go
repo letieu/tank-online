@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/render"
 	"time"
@@ -16,18 +15,20 @@ func main() {
 	go game.ListenKeys(render.Screen)
 
 	for {
+		render.ClearScreen()
         if game.Dead {
-            fmt.Println("You are dead!")
+            render.DrawEnd(&game)
+            render.ShowScreen()
             break
         }
 
 		now := time.Now()
 
-		render.ClearScreen()
 		render.DrawBackground()
 		game.Tick()
 		render.DrawTanks(&game)
 		render.DrawBullets(&game)
+        render.DrawScores(&game)
 		render.ShowScreen()
 
 		waitForFrame(now)
