@@ -138,6 +138,7 @@ func (g *Game) Tick() {
 
 	if len(g.EnemyTanks) == 0 {
 		g.EnemyTanks = append(g.EnemyTanks, g.newEnemyTank())
+		g.EnemyTanks = append(g.EnemyTanks, g.newEnemyTank())
 	}
 }
 
@@ -193,18 +194,11 @@ func NewGame(width, height int) Game {
 	myTank.Speed = 30
 	myTank.FireSpeed = 40
 
-	enemyTank1 := &Tank{Pos: &Pos{X: 10, Y: 10}, Direction: Down}
-	enemyTank1.Speed = 10
-	enemyTank1.FireSpeed = 30
-
-	enemyTank2 := &Tank{Pos: &Pos{X: 20, Y: 30}, Direction: Right}
-	enemyTank2.Speed = 13
-	enemyTank2.FireSpeed = 30
-
 	game := Game{MyTank: myTank, Width: width, Height: height}
 
-	game.EnemyTanks = append(game.EnemyTanks, enemyTank1)
-	game.EnemyTanks = append(game.EnemyTanks, enemyTank2)
+	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
+	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
+	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
 
 	return game
 }
@@ -217,11 +211,17 @@ func (g *Game) handleMyTankFire() {
 
 func (g *Game) handleEnemyTanks() []*Tank {
 	remainEnemyTanks := make([]*Tank, 0)
+
+	directions := []int{Up, Down, Left, Right}
 	for _, enemyTank := range g.EnemyTanks {
-		if rand.Intn(5) == 0 {
+		if rand.Intn(10) == 0 { // 1/01 chance to fire
 			enemyTank.Fire = true
 		}
 
+		// Randomly change direction
+		if rand.Intn(25) == 0 { // 1/25 chance to change direction
+			enemyTank.Direction = directions[rand.Intn(len(directions))]
+		}
 		enemyTank.move(g.Width, g.Height)
 
 		if enemyTank.Fire {
@@ -272,5 +272,7 @@ func (g *Game) handleEnemyBullets() []*Bullet {
 }
 
 func (g *Game) newEnemyTank() *Tank {
-	return &Tank{Pos: &Pos{X: 10, Y: 10}, Direction: Right, Speed: 10, FireSpeed: 30}
+    randomX := rand.Intn(g.Width)
+    randomY := rand.Intn(g.Height)
+	return &Tank{Pos: &Pos{X: randomX, Y: randomY}, Direction: Right, Speed: 20, FireSpeed: 10}
 }
