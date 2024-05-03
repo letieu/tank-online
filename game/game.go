@@ -112,62 +112,16 @@ type Game struct {
 
 func (g *Game) Tick() {
 	g.MyTank.move()
+	g.handleMyTankFire()
 
-	if g.MyTank.Fire {
-		g.Bullets = append(g.Bullets, g.MyTank.fire())
-	}
-
-    remainEnemyTanks := make([]*Tank, 0)
-	for _, enemyTank := range g.EnemyTanks {
-		if rand.Intn(5) == 0 {
-			enemyTank.Fire = true
-		}
-
-		enemyTank.move()
-
-		if enemyTank.Fire {
-			g.EnemyBullets = append(g.EnemyBullets, enemyTank.fire())
-		}
-
-		isHit := false
-		for _, bullet := range g.Bullets {
-			if enemyTank.isHit(bullet) {
-				isHit = true
-				break
-			}
-		}
-
-        if !isHit {
-            remainEnemyTanks = append(remainEnemyTanks, enemyTank)
-        }
-	}
-
-	remainBullet := make([]*Bullet, 0)
-	remainEnemyBullet := make([]*Bullet, 0)
-
-	for _, bullet := range g.Bullets {
-		bullet.move()
-
-		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
-			remainBullet = append(remainBullet, bullet)
-		}
-	}
-
-	for _, bullet := range g.EnemyBullets {
-		bullet.move()
-
-		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
-			remainEnemyBullet = append(remainEnemyBullet, bullet)
-		}
-
-		if g.MyTank.isHit(bullet) {
-			g.Dead = true
-		}
-	}
-
-	g.EnemyBullets = remainEnemyBullet
-	g.Bullets = remainBullet
+	remainEnemyTanks := g.handleEnemyTanks()
 	g.EnemyTanks = remainEnemyTanks
+
+	remainBullet := g.handleBullets()
+	g.Bullets = remainBullet
+
+	remainEnemyBullet := g.handleEnemyBullets()
+	g.EnemyBullets = remainEnemyBullet
 }
 
 func (g *Game) ListenKeys(screen tcell.Screen) {
@@ -231,4 +185,66 @@ func NewGame(width, height int) Game {
 	game.EnemyTanks = append(game.EnemyTanks, enemyTank1)
 
 	return game
+}
+
+func (g *Game) handleMyTankFire() {
+	if g.MyTank.Fire {
+		g.Bullets = append(g.Bullets, g.MyTank.fire())
+	}
+}
+
+func (g *Game) handleEnemyTanks() []*Tank {
+	remainEnemyTanks := make([]*Tank, 0)
+	for _, enemyTank := range g.EnemyTanks {
+		if rand.Intn(5) == 0 {
+			enemyTank.Fire = true
+		}
+
+		enemyTank.move()
+
+		if enemyTank.Fire {
+			g.EnemyBullets = append(g.EnemyBullets, enemyTank.fire())
+		}
+
+		isHit := false
+		for _, bullet := range g.Bullets {
+			if enemyTank.isHit(bullet) {
+				isHit = true
+				break
+			}
+		}
+
+		if !isHit {
+			remainEnemyTanks = append(remainEnemyTanks, enemyTank)
+		}
+	}
+	return remainEnemyTanks
+}
+
+func (g *Game) handleBullets() []*Bullet {
+	remainBullet := make([]*Bullet, 0)
+	for _, bullet := range g.Bullets {
+		bullet.move()
+
+		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
+			remainBullet = append(remainBullet, bullet)
+		}
+	}
+	return remainBullet
+}
+
+func (g *Game) handleEnemyBullets() []*Bullet {
+	remainEnemyBullet := make([]*Bullet, 0)
+	for _, bullet := range g.EnemyBullets {
+		bullet.move()
+
+		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
+			remainEnemyBullet = append(remainEnemyBullet, bullet)
+		}
+
+		if g.MyTank.isHit(bullet) {
+			g.Dead = true
+		}
+	}
+	return remainEnemyBullet
 }
