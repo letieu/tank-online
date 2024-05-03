@@ -6,6 +6,29 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+var tankSprites = map[int][3][3]rune{
+	game.Up: {
+		{' ', '🀫', '🀫'},
+		{'🀫', '🀫', '🀫'},
+		{' ', '🀫', '🀫'},
+	},
+	game.Down: {
+		{'🀫', '🀫', ' '},
+		{'🀫', '🀫', '🀫'},
+		{'🀫', '🀫', ' '},
+	},
+	game.Left: {
+		{' ', '🀫', ' '},
+		{'🀫', '🀫', '🀫'},
+		{'🀫', '🀫', '🀫'},
+	},
+	game.Right: {
+		{'🀫', '🀫', '🀫'},
+		{'🀫', '🀫', '🀫'},
+		{' ', '🀫', ' '},
+	},
+}
+
 type Render struct {
 	Screen tcell.Screen
 	styles map[string]tcell.Style
@@ -14,8 +37,8 @@ type Render struct {
 func NewRender() *Render {
 	styles := map[string]tcell.Style{
 		"background": tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color17),
-		"my_tank":    tcell.StyleDefault.Background(tcell.Color190).Foreground(tcell.Color190),
-        "bullet":     tcell.StyleDefault.Background(tcell.Color122).Foreground(tcell.Color122),
+		"my_tank":    tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color190),
+		"bullet":     tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color122),
 	}
 
 	screen, err := tcell.NewScreen()
@@ -35,13 +58,20 @@ func (r *Render) DrawBackground() {
 	r.DrawBox(0, 0, 100, 100, r.styles["background"])
 }
 
-func (r *Render) DrawTanks(game *game.Game) {
-	r.Screen.SetContent(game.MyTank.Pos.X, game.MyTank.Pos.Y, ' ', nil, r.styles["my_tank"])
+func (r *Render) DrawTanks(g *game.Game) {
+	var tankSprite [3][3]rune = tankSprites[g.MyTank.Direction]
+
+	x, y := g.MyTank.Pos.X, g.MyTank.Pos.Y
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 3; j++ {
+			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles["my_tank"])
+		}
+	}
 }
 
-func (r *Render) DrawBullets(game *game.Game) {
-	for _, bullet := range game.Bullets {
-		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, ' ', nil, r.styles["bullet"])
+func (r *Render) DrawBullets(g *game.Game) {
+	for _, bullet := range g.Bullets {
+		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
 	}
 }
 
