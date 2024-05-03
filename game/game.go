@@ -1,8 +1,10 @@
 package game
 
 import (
-	"github.com/gdamore/tcell"
 	"os"
+	"time"
+
+	"github.com/gdamore/tcell"
 )
 
 const (
@@ -12,8 +14,15 @@ const (
 	Right = -2
 )
 
+const FrameRate = 60
+const FrameTime = time.Second / FrameRate
+
 type Pos struct {
 	X, Y int
+}
+
+func (p *Pos) isOutOfScreen(width, height int) bool {
+	return p.X < 0 || p.X >= width || p.Y < 0 || p.Y >= height
 }
 
 func (p *Pos) move(direction int) {
@@ -30,30 +39,43 @@ func (p *Pos) move(direction int) {
 }
 
 type Bullet struct {
-	Pos       *Pos
-	Direction int
+	Pos                 *Pos
+	Direction           int
+	Speed               int
+	FramesUntilNextMove int
 }
 
 func (b *Bullet) move() {
 	b.Pos.move(b.Direction)
-}
 
-func (b *Bullet) isOutOfScreen(width, height int) bool {
-	return b.Pos.X < 0 || b.Pos.X >= width || b.Pos.Y < 0 || b.Pos.Y >= height
+	if b.FramesUntilNextMove > 0 {
+		b.FramesUntilNextMove--
+		return
+	}
 }
 
 type Tank struct {
-	Pos       *Pos
-	Direction int
-	Fire      bool
+	Pos                 *Pos
+	Direction           int
+	Fire                bool
+	Speed               int
+	FramesUntilNextMove int
+	FireSpeed           int
 }
 
 func (t *Tank) move() {
+	if t.FramesUntilNextMove > 0 {
+		t.FramesUntilNextMove--
+		return
+	}
+
 	t.Pos.move(t.Direction)
+
+	t.FramesUntilNextMove = FrameRate / t.Speed
 }
 
 func (t *Tank) fire() *Bullet {
-	return &Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction}
+	return &Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction, Speed: t.FireSpeed}
 }
 
 type Game struct {
@@ -69,13 +91,14 @@ func (g *Game) Tick() {
 
 	if g.MyTank.Fire {
 		g.Bullets = append(g.Bullets, g.MyTank.fire())
+		g.MyTank.Fire = false
 	}
 
 	remainBullet := make([]*Bullet, 0)
 	for _, bullet := range g.Bullets {
 		bullet.move()
 
-		if !bullet.isOutOfScreen(g.Width, g.Height) {
+		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
 			remainBullet = append(remainBullet, bullet)
 		}
 	}
@@ -132,5 +155,7 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 
 func NewGame(width, height int) Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
+	myTank.Speed = 30
+	myTank.FireSpeed = 40
 	return Game{MyTank: myTank, Width: width, Height: height}
 }

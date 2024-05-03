@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-const frameRate = 60
-const frameTime = time.Second / frameRate
-
 func main() {
 	render := render.NewRender()
 	windowWidth, windowHeight := render.Screen.Size()
@@ -33,7 +30,7 @@ func main() {
 
 func waitForFrame(startTime time.Time) {
 	elapsed := time.Since(startTime)
-	if elapsed < frameTime {
-		time.Sleep(frameTime - elapsed)
+	if elapsed < game.FrameTime {
+		time.Sleep(game.FrameTime - elapsed)
 	}
 }
