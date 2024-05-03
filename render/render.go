@@ -59,18 +59,31 @@ func (r *Render) DrawBackground() {
 }
 
 func (r *Render) DrawTanks(g *game.Game) {
-	var tankSprite [3][3]rune = tankSprites[g.MyTank.Direction]
+	r.drawTank(g.MyTank)
 
-	x, y := g.MyTank.Pos.X, g.MyTank.Pos.Y
+	for _, tank := range g.EnemyTanks {
+		r.drawTank(tank)
+	}
+}
+
+func (r *Render) drawTank(t *game.Tank) {
+	var tankSprite [3][3]rune = tankSprites[t.Direction]
+
+	x, y := t.Pos.X, t.Pos.Y
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
 			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles["my_tank"])
 		}
 	}
+
 }
 
 func (r *Render) DrawBullets(g *game.Game) {
 	for _, bullet := range g.Bullets {
+		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
+	}
+
+	for _, bullet := range g.EnemyBullets {
 		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
 	}
 }

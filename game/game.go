@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math/rand"
 	"os"
 	"time"
 
@@ -75,15 +76,38 @@ func (t *Tank) move() {
 }
 
 func (t *Tank) fire() *Bullet {
+	t.Fire = false
 	return &Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction, Speed: t.FireSpeed}
 }
 
+func (t *Tank) isHit(b *Bullet) bool {
+	tankBounds := [3][3]Pos{
+		{Pos{X: t.Pos.X - 1, Y: t.Pos.Y - 1}, Pos{X: t.Pos.X, Y: t.Pos.Y - 1}, Pos{X: t.Pos.X + 1, Y: t.Pos.Y - 1}},
+		{Pos{X: t.Pos.X - 1, Y: t.Pos.Y}, Pos{X: t.Pos.X, Y: t.Pos.Y}, Pos{X: t.Pos.X + 1, Y: t.Pos.Y}},
+		{Pos{X: t.Pos.X - 1, Y: t.Pos.Y + 1}, Pos{X: t.Pos.X, Y: t.Pos.Y + 1}, Pos{X: t.Pos.X + 1, Y: t.Pos.Y + 1}},
+	}
+
+	for _, bound := range tankBounds {
+		for _, pos := range bound {
+			if pos.X == b.Pos.X && pos.Y == b.Pos.Y {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 type Game struct {
-	MyTank *Tank
+	MyTank  *Tank
+	Bullets []*Bullet
+	Dead    bool
+
 	Width  int
 	Height int
 
-	Bullets []*Bullet
+	EnemyTanks   []*Tank
+	EnemyBullets []*Bullet
 }
 
 func (g *Game) Tick() {
@@ -91,10 +115,36 @@ func (g *Game) Tick() {
 
 	if g.MyTank.Fire {
 		g.Bullets = append(g.Bullets, g.MyTank.fire())
-		g.MyTank.Fire = false
+	}
+
+    remainEnemyTanks := make([]*Tank, 0)
+	for _, enemyTank := range g.EnemyTanks {
+		if rand.Intn(5) == 0 {
+			enemyTank.Fire = true
+		}
+
+		enemyTank.move()
+
+		if enemyTank.Fire {
+			g.EnemyBullets = append(g.EnemyBullets, enemyTank.fire())
+		}
+
+		isHit := false
+		for _, bullet := range g.Bullets {
+			if enemyTank.isHit(bullet) {
+				isHit = true
+				break
+			}
+		}
+
+        if !isHit {
+            remainEnemyTanks = append(remainEnemyTanks, enemyTank)
+        }
 	}
 
 	remainBullet := make([]*Bullet, 0)
+	remainEnemyBullet := make([]*Bullet, 0)
+
 	for _, bullet := range g.Bullets {
 		bullet.move()
 
@@ -103,7 +153,21 @@ func (g *Game) Tick() {
 		}
 	}
 
+	for _, bullet := range g.EnemyBullets {
+		bullet.move()
+
+		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
+			remainEnemyBullet = append(remainEnemyBullet, bullet)
+		}
+
+		if g.MyTank.isHit(bullet) {
+			g.Dead = true
+		}
+	}
+
+	g.EnemyBullets = remainEnemyBullet
 	g.Bullets = remainBullet
+	g.EnemyTanks = remainEnemyTanks
 }
 
 func (g *Game) ListenKeys(screen tcell.Screen) {
@@ -157,5 +221,14 @@ func NewGame(width, height int) Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
 	myTank.Speed = 30
 	myTank.FireSpeed = 40
-	return Game{MyTank: myTank, Width: width, Height: height}
+
+	enemyTank1 := &Tank{Pos: &Pos{X: 10, Y: 10}, Direction: Down}
+	enemyTank1.Speed = 10
+	enemyTank1.FireSpeed = 30
+
+	game := Game{MyTank: myTank, Width: width, Height: height}
+
+	game.EnemyTanks = append(game.EnemyTanks, enemyTank1)
+
+	return game
 }
