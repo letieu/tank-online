@@ -32,13 +32,16 @@ var tankSprites = map[int][3][3]rune{
 type Render struct {
 	Screen tcell.Screen
 	styles map[string]tcell.Style
+	Width  int
+	Height int
 }
 
 func NewRender() *Render {
 	styles := map[string]tcell.Style{
-		"background": tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color17),
-		"my_tank":    tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color190),
-		"bullet":     tcell.StyleDefault.Background(tcell.Color17).Foreground(tcell.Color122),
+		"background": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color17),
+		"my_tank":    tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color190),
+		"enemy_tank": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color50),
+		"bullet":     tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color122),
 	}
 
 	screen, err := tcell.NewScreen()
@@ -51,28 +54,30 @@ func NewRender() *Render {
 		panic(err)
 	}
 
-	return &Render{Screen: screen, styles: styles}
+	width, height := screen.Size()
+
+	return &Render{Screen: screen, styles: styles, Width: width, Height: height}
 }
 
 func (r *Render) DrawBackground() {
-	r.DrawBox(0, 0, 100, 100, r.styles["background"])
+	r.DrawBox(0, 0, r.Width, r.Height, r.styles["background"])
 }
 
 func (r *Render) DrawTanks(g *game.Game) {
-	r.drawTank(g.MyTank)
+	r.drawTank(g.MyTank, "my_tank")
 
 	for _, tank := range g.EnemyTanks {
-		r.drawTank(tank)
+		r.drawTank(tank, "enemy_tank")
 	}
 }
 
-func (r *Render) drawTank(t *game.Tank) {
+func (r *Render) drawTank(t *game.Tank, style string) {
 	var tankSprite [3][3]rune = tankSprites[t.Direction]
 
 	x, y := t.Pos.X, t.Pos.Y
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
-			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles["my_tank"])
+			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles[style])
 		}
 	}
 

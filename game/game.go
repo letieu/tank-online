@@ -64,13 +64,26 @@ type Tank struct {
 	FireSpeed           int
 }
 
-func (t *Tank) move() {
+func (t *Tank) move(width, height int) {
 	if t.FramesUntilNextMove > 0 {
 		t.FramesUntilNextMove--
 		return
 	}
 
 	t.Pos.move(t.Direction)
+
+	if t.Pos.isOutOfScreen(width, height) {
+		switch t.Direction {
+		case Up:
+			t.Pos.Y = height - 1
+		case Down:
+			t.Pos.Y = 0
+		case Left:
+			t.Pos.X = width - 1
+		case Right:
+			t.Pos.X = 0
+		}
+	}
 
 	t.FramesUntilNextMove = FrameRate / t.Speed
 }
@@ -111,7 +124,7 @@ type Game struct {
 }
 
 func (g *Game) Tick() {
-	g.MyTank.move()
+	g.MyTank.move(g.Width, g.Height)
 	g.handleMyTankFire()
 
 	remainEnemyTanks := g.handleEnemyTanks()
@@ -122,6 +135,10 @@ func (g *Game) Tick() {
 
 	remainEnemyBullet := g.handleEnemyBullets()
 	g.EnemyBullets = remainEnemyBullet
+
+	if len(g.EnemyTanks) == 0 {
+		g.EnemyTanks = append(g.EnemyTanks, g.newEnemyTank())
+	}
 }
 
 func (g *Game) ListenKeys(screen tcell.Screen) {
@@ -180,9 +197,14 @@ func NewGame(width, height int) Game {
 	enemyTank1.Speed = 10
 	enemyTank1.FireSpeed = 30
 
+	enemyTank2 := &Tank{Pos: &Pos{X: 20, Y: 30}, Direction: Right}
+	enemyTank2.Speed = 13
+	enemyTank2.FireSpeed = 30
+
 	game := Game{MyTank: myTank, Width: width, Height: height}
 
 	game.EnemyTanks = append(game.EnemyTanks, enemyTank1)
+	game.EnemyTanks = append(game.EnemyTanks, enemyTank2)
 
 	return game
 }
@@ -200,7 +222,7 @@ func (g *Game) handleEnemyTanks() []*Tank {
 			enemyTank.Fire = true
 		}
 
-		enemyTank.move()
+		enemyTank.move(g.Width, g.Height)
 
 		if enemyTank.Fire {
 			g.EnemyBullets = append(g.EnemyBullets, enemyTank.fire())
@@ -247,4 +269,8 @@ func (g *Game) handleEnemyBullets() []*Bullet {
 		}
 	}
 	return remainEnemyBullet
+}
+
+func (g *Game) newEnemyTank() *Tank {
+	return &Tank{Pos: &Pos{X: 10, Y: 10}, Direction: Right, Speed: 10, FireSpeed: 30}
 }
