@@ -1,9 +1,7 @@
 package render
 
 import (
-	"fmt"
 	"tieu/learn/tank/game"
-
 	"github.com/gdamore/tcell"
 )
 
@@ -76,12 +74,10 @@ func (r *Render) DrawTanks(g *game.Game) {
 }
 
 func (r *Render) DrawScores(g *game.Game) {
-	r.DrawText(1, 1, fmt.Sprintf("Kills: %d", g.Kills), r.styles["score"])
 }
 
 func (r *Render) DrawEnd(g *game.Game) {
 	r.DrawText(r.Width/2-5, r.Height/2, "You are dead!", r.styles["score"])
-	r.DrawText(r.Width/2-5, r.Height/2+1, fmt.Sprintf("Kills: %d", g.Kills), r.styles["score"])
 }
 
 func (r *Render) drawTank(t *game.Tank, style string) {

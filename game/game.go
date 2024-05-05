@@ -1,7 +1,7 @@
 package game
 
 import (
-	"os"
+	"encoding/json"
 	"strconv"
 	"time"
 
@@ -65,6 +65,10 @@ type Tank struct {
 }
 
 func (t *Tank) move(width, height int) {
+	if t.Speed == 0 {
+		return
+	}
+
 	if t.FramesUntilNextMove > 0 {
 		t.FramesUntilNextMove--
 		return
@@ -90,7 +94,16 @@ func (t *Tank) move(width, height int) {
 
 func (t *Tank) fire() Bullet {
 	t.Fire = false
-	return Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction, Speed: t.FireSpeed}
+
+	p := &Pos{X: t.Pos.X, Y: t.Pos.Y}
+    p.move(t.Direction)
+    p.move(t.Direction)
+
+	return Bullet{
+		Pos:       p,
+		Direction: t.Direction,
+		Speed:     t.FireSpeed,
+	}
 }
 
 func (t *Tank) isHit(b *Bullet) bool {
@@ -113,7 +126,7 @@ func (t *Tank) isHit(b *Bullet) bool {
 
 type Game struct {
 	Dead   bool
-	Kills  int
+	Quit   bool
 	Width  int
 	Height int
 
@@ -152,9 +165,7 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 				direction = Right
 
 			case tcell.KeyCtrlC:
-				screen.Fini()
-				os.Exit(0)
-				return
+				g.Quit = true
 			}
 
 			// vim keys
@@ -190,7 +201,7 @@ func NewGame(width, height int) *Game {
 		myId: myTank,
 	}
 
-	game := Game{MyTank: myId, Width: width, Height: height, Tanks: tanks}
+	game := Game{MyTank: myId, Width: width, Height: height, Tanks: tanks, Quit: false}
 
 	return &game
 }
@@ -210,37 +221,71 @@ func (g *Game) handleFire() {
 }
 
 func (g *Game) handleBullets() []Bullet {
+	myTank := g.Tanks[g.MyTank]
 	remainBullet := make([]Bullet, 0)
+
 	for _, bullet := range g.Bullets {
 		bullet.move()
 
 		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
 			remainBullet = append(remainBullet, bullet)
 		}
+
+		if myTank.isHit(&bullet) {
+			g.Dead = true
+		}
 	}
 	return remainBullet
 }
 
+func (g *Game) HandleRemoteState(s SyncState) {
+	if s.Dead {
+		delete(g.Tanks, s.Id)
+		return
+	}
+
+	g.Tanks[s.Id] = &Tank{
+		Pos:                 &s.Pos,
+		Direction:           s.Direction,
+		Fire:                s.Fire,
+		Speed:               s.Speed,
+		FramesUntilNextMove: s.FramesUntilNextMove,
+		FireSpeed:           s.FireSpeed,
+	}
+}
+
 type SyncState struct {
+	Id                  string
 	Pos                 Pos
 	Direction           int
 	Fire                bool
 	Speed               int
 	FramesUntilNextMove int
 	FireSpeed           int
+	Dead                bool
 }
 
 func (g *Game) GetSyncState() SyncState {
 	myTank := g.Tanks[g.MyTank]
 
 	syncState := SyncState{
+		Id:                  g.MyTank,
 		Pos:                 *myTank.Pos,
 		Direction:           myTank.Direction,
 		Fire:                myTank.Fire,
 		Speed:               myTank.Speed,
 		FramesUntilNextMove: myTank.FramesUntilNextMove,
 		FireSpeed:           myTank.FireSpeed,
+		Dead:                g.Dead,
 	}
 
 	return syncState
+}
+
+func (s SyncState) MarshalBinary() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+func (s *SyncState) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, s)
 }

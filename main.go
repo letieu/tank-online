@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/render"
 	"time"
@@ -8,29 +10,78 @@ import (
 	"github.com/go-redis/redis"
 )
 
-func main() {
-	rdb := redis.NewClient(&redis.Options{
+type Client struct {
+	game        *game.Game
+	redisClient *redis.Client
+	sendStateCh chan game.SyncState
+}
+
+func NewClient(g *game.Game) *Client {
+	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "secret",
 	})
 
+	sendStateCh := make(chan game.SyncState)
+
+	return &Client{
+		game:        g,
+		redisClient: redisClient,
+		sendStateCh: sendStateCh,
+	}
+}
+
+func (c *Client) join() {
+	pubsub := c.redisClient.Subscribe("default")
+	ch := pubsub.Channel()
+
+	go func() {
+		for {
+			e := c.redisClient.Publish("default", <-c.sendStateCh).Err()
+			if e != nil {
+				fmt.Println(e)
+			}
+		}
+	}()
+
+	go func() {
+		for msg := range ch {
+			var state game.SyncState
+			state.UnmarshalBinary([]byte(msg.Payload))
+
+			if state.Id == c.game.MyTank {
+				continue
+			}
+
+			c.game.HandleRemoteState(state)
+		}
+	}()
+}
+
+func (c *Client) leave() {
+	err := c.redisClient.Publish("default", game.SyncState{
+		Dead: true,
+	}).Err()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func main() {
 	render := render.NewRender()
 	windowWidth, windowHeight := render.Screen.Size()
 
 	g := game.NewGame(windowWidth, windowHeight)
-
-	sendStateCh := make(chan game.SyncState)
+	c := NewClient(g)
 
 	go g.ListenKeys(render.Screen)
-
-	go func() {
-		for {
-			sendGameState(<-sendStateCh, rdb)
-		}
-	}()
+	c.join()
 
 	for {
 		now := time.Now()
+
+		c.sendStateCh <- g.GetSyncState()
 
 		render.ClearScreen()
 		if g.Dead {
@@ -39,10 +90,13 @@ func main() {
 			break
 		}
 
-		render.DrawBackground()
+		if g.Quit {
+			os.Exit(0)
+			break
+		}
 
+		render.DrawBackground()
 		g.Tick()
-		sendStateCh <- g.GetSyncState()
 
 		render.DrawTanks(g)
 		render.DrawBullets(g)
@@ -51,6 +105,8 @@ func main() {
 
 		waitForFrame(now)
 	}
+
+	c.leave()
 }
 
 func waitForFrame(startTime time.Time) {
@@ -58,8 +114,4 @@ func waitForFrame(startTime time.Time) {
 	if elapsed < game.FrameTime {
 		time.Sleep(game.FrameTime - elapsed)
 	}
-}
-
-func sendGameState(state game.SyncState, redisClient *redis.Client) {
-    redisClient.Set("state", state, time.Minute)
 }
