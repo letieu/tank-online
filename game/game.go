@@ -96,8 +96,8 @@ func (t *Tank) fire() Bullet {
 	t.Fire = false
 
 	p := &Pos{X: t.Pos.X, Y: t.Pos.Y}
-    p.move(t.Direction)
-    p.move(t.Direction)
+	p.move(t.Direction)
+	p.move(t.Direction)
 
 	return Bullet{
 		Pos:       p,
@@ -235,6 +235,8 @@ func (g *Game) handleBullets() []Bullet {
 			g.Dead = true
 		}
 	}
+	g.Bullets = remainBullet
+
 	return remainBullet
 }
 

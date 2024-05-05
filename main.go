@@ -70,9 +70,8 @@ func (c *Client) leave() {
 
 func main() {
 	render := render.NewRender()
-	windowWidth, windowHeight := render.Screen.Size()
 
-	g := game.NewGame(windowWidth, windowHeight)
+	g := game.NewGame(20, 20)
 	c := NewClient(g)
 
 	go g.ListenKeys(render.Screen)
@@ -95,7 +94,7 @@ func main() {
 			break
 		}
 
-		render.DrawBackground()
+		render.DrawBackground(g)
 		g.Tick()
 
 		render.DrawTanks(g)

@@ -59,8 +59,8 @@ func NewRender() *Render {
 	return &Render{Screen: screen, styles: styles, Width: width, Height: height}
 }
 
-func (r *Render) DrawBackground() {
-	r.DrawBox(0, 0, r.Width, r.Height, r.styles["background"])
+func (r *Render) DrawBackground(g *game.Game) {
+	r.DrawBox(0, 0, g.Width, g.Height, r.styles["background"])
 }
 
 func (r *Render) DrawTanks(g *game.Game) {
