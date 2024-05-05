@@ -66,10 +66,12 @@ func (r *Render) DrawBackground() {
 }
 
 func (r *Render) DrawTanks(g *game.Game) {
-	r.drawTank(g.MyTank, "my_tank")
-
-	for _, tank := range g.EnemyTanks {
-		r.drawTank(tank, "enemy_tank")
+	for id, tank := range g.Tanks {
+		if id == g.MyTank {
+			r.drawTank(tank, "my_tank")
+		} else {
+			r.drawTank(tank, "enemy_tank")
+		}
 	}
 }
 
@@ -96,10 +98,6 @@ func (r *Render) drawTank(t *game.Tank, style string) {
 
 func (r *Render) DrawBullets(g *game.Game) {
 	for _, bullet := range g.Bullets {
-		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
-	}
-
-	for _, bullet := range g.EnemyBullets {
 		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
 	}
 }

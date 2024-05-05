@@ -1,8 +1,8 @@
 package game
 
 import (
-	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gdamore/tcell"
@@ -88,9 +88,9 @@ func (t *Tank) move(width, height int) {
 	t.FramesUntilNextMove = FrameRate / t.Speed
 }
 
-func (t *Tank) fire() *Bullet {
+func (t *Tank) fire() Bullet {
 	t.Fire = false
-	return &Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction, Speed: t.FireSpeed}
+	return Bullet{Pos: &Pos{X: t.Pos.X, Y: t.Pos.Y}, Direction: t.Direction, Speed: t.FireSpeed}
 }
 
 func (t *Tank) isHit(b *Bullet) bool {
@@ -112,40 +112,28 @@ func (t *Tank) isHit(b *Bullet) bool {
 }
 
 type Game struct {
-	MyTank  *Tank
-	Bullets []*Bullet
-	Dead    bool
-	Kills   int
-
+	Dead   bool
+	Kills  int
 	Width  int
 	Height int
 
-	EnemyTanks   []*Tank
-	EnemyBullets []*Bullet
+	Tanks  map[string]*Tank
+	MyTank string
+
+	Bullets []Bullet
 }
 
 func (g *Game) Tick() {
-	g.MyTank.move(g.Width, g.Height)
-	g.handleMyTankFire()
-
-	remainEnemyTanks := g.handleEnemyTanks()
-	g.EnemyTanks = remainEnemyTanks
-
-	remainBullet := g.handleBullets()
-	g.Bullets = remainBullet
-
-	remainEnemyBullet := g.handleEnemyBullets()
-	g.EnemyBullets = remainEnemyBullet
-
-	if len(g.EnemyTanks) == 0 {
-		g.EnemyTanks = append(g.EnemyTanks, g.newEnemyTank())
-		g.EnemyTanks = append(g.EnemyTanks, g.newEnemyTank())
-	}
+	g.handleMove()
+	g.handleFire()
+	g.handleBullets()
 }
 
 func (g *Game) ListenKeys(screen tcell.Screen) {
+	myTank := g.Tanks[g.MyTank]
+
 	for {
-		direction := g.MyTank.Direction
+		direction := myTank.Direction
 		fire := false
 
 		ev := screen.PollEvent()
@@ -185,69 +173,44 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 			}
 		}
 
-		g.MyTank.Direction = direction
-		g.MyTank.Fire = fire
+		myTank.Direction = direction
+		myTank.Fire = fire
+
+		g.Tanks[g.MyTank] = myTank
 	}
 }
 
-func NewGame(width, height int) Game {
+func NewGame(width, height int) *Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
 	myTank.Speed = 30
 	myTank.FireSpeed = 40
+	myId := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 
-	game := Game{MyTank: myTank, Width: width, Height: height}
+	tanks := map[string]*Tank{
+		myId: myTank,
+	}
 
-	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
-	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
-	game.EnemyTanks = append(game.EnemyTanks, game.newEnemyTank())
+	game := Game{MyTank: myId, Width: width, Height: height, Tanks: tanks}
 
-	return game
+	return &game
 }
 
-func (g *Game) handleMyTankFire() {
-	if g.MyTank.Fire {
-		g.Bullets = append(g.Bullets, g.MyTank.fire())
+func (g *Game) handleMove() {
+	for _, tank := range g.Tanks {
+		tank.move(g.Width, g.Height)
 	}
 }
 
-func (g *Game) handleEnemyTanks() []*Tank {
-	remainEnemyTanks := make([]*Tank, 0)
-
-	directions := []int{Up, Down, Left, Right}
-	for _, enemyTank := range g.EnemyTanks {
-		if rand.Intn(10) == 0 { // 1/01 chance to fire
-			enemyTank.Fire = true
-		}
-
-		// Randomly change direction
-		if rand.Intn(25) == 0 { // 1/25 chance to change direction
-			enemyTank.Direction = directions[rand.Intn(len(directions))]
-		}
-		enemyTank.move(g.Width, g.Height)
-
-		if enemyTank.Fire {
-			g.EnemyBullets = append(g.EnemyBullets, enemyTank.fire())
-		}
-
-		isHit := false
-		for _, bullet := range g.Bullets {
-			if enemyTank.isHit(bullet) {
-				isHit = true
-				break
-			}
-		}
-
-		if !isHit {
-			remainEnemyTanks = append(remainEnemyTanks, enemyTank)
-		} else {
-			g.Kills++
+func (g *Game) handleFire() {
+	for _, tank := range g.Tanks {
+		if tank.Fire {
+			g.Bullets = append(g.Bullets, tank.fire())
 		}
 	}
-	return remainEnemyTanks
 }
 
-func (g *Game) handleBullets() []*Bullet {
-	remainBullet := make([]*Bullet, 0)
+func (g *Game) handleBullets() []Bullet {
+	remainBullet := make([]Bullet, 0)
 	for _, bullet := range g.Bullets {
 		bullet.move()
 
@@ -258,24 +221,26 @@ func (g *Game) handleBullets() []*Bullet {
 	return remainBullet
 }
 
-func (g *Game) handleEnemyBullets() []*Bullet {
-	remainEnemyBullet := make([]*Bullet, 0)
-	for _, bullet := range g.EnemyBullets {
-		bullet.move()
-
-		if !bullet.Pos.isOutOfScreen(g.Width, g.Height) {
-			remainEnemyBullet = append(remainEnemyBullet, bullet)
-		}
-
-		if g.MyTank.isHit(bullet) {
-			g.Dead = true
-		}
-	}
-	return remainEnemyBullet
+type SyncState struct {
+	Pos                 Pos
+	Direction           int
+	Fire                bool
+	Speed               int
+	FramesUntilNextMove int
+	FireSpeed           int
 }
 
-func (g *Game) newEnemyTank() *Tank {
-	randomX := rand.Intn(g.Width)
-	randomY := rand.Intn(g.Height)
-	return &Tank{Pos: &Pos{X: randomX, Y: randomY}, Direction: Right, Speed: 20, FireSpeed: 10}
+func (g *Game) GetSyncState() SyncState {
+	myTank := g.Tanks[g.MyTank]
+
+	syncState := SyncState{
+		Pos:                 *myTank.Pos,
+		Direction:           myTank.Direction,
+		Fire:                myTank.Fire,
+		Speed:               myTank.Speed,
+		FramesUntilNextMove: myTank.FramesUntilNextMove,
+		FireSpeed:           myTank.FireSpeed,
+	}
+
+	return syncState
 }
