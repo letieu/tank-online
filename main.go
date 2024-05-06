@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	gameState := game.NewGame(40, 20)
+	gameState := game.NewGame(50, 30)
 
 	client := client.NewClient(gameState)
 	err := client.Join()
@@ -23,8 +23,8 @@ func main() {
 	go gameState.ListenKeys(drawler.Screen)
 
 	viewPort := viewport.ViewPort{
-		Width:  50,
-		Height: 30,
+		Width:  40,
+		Height: 20,
 	}
 
 	for {

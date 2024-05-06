@@ -38,12 +38,14 @@ type Render struct {
 }
 
 func NewRender() *Render {
+	background := tcell.Color18
+
 	styles := map[string]tcell.Style{
-		"background": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color17),
-		"my_tank":    tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color190),
-		"enemy_tank": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color50),
-		"bullet":     tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color122),
-		"score":      tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed),
+		"background": tcell.StyleDefault.Background(background).Foreground(tcell.Color17),
+		"my_tank":    tcell.StyleDefault.Background(background).Foreground(tcell.Color190),
+		"enemy_tank": tcell.StyleDefault.Background(background).Foreground(tcell.Color50),
+		"bullet":     tcell.StyleDefault.Background(background).Foreground(tcell.Color122),
+		"score":      tcell.StyleDefault.Background(background).Foreground(tcell.ColorRed),
 		"view_port":  tcell.StyleDefault.Background(tcell.Color88).Foreground(tcell.ColorRed),
 	}
 
@@ -63,10 +65,19 @@ func NewRender() *Render {
 }
 
 func (r *Render) DrawBackground(g *game.Game, vp *viewport.ViewPort) {
-	x, y := vp.Translate(0, 0)
-	r.DrawBox(x, y, x + g.Width, y + g.Height, r.styles["background"])
+	x1, y1 := vp.Translate(0, 0)
+	x2, y2 := vp.Translate(g.Width, g.Height)
 
-	// r.DrawBox(0, 0, vp.Width, vp.Height, r.styles["view_port"])
+	if x2 > vp.Width {
+		x2 = vp.Width
+	}
+
+	if y2 > vp.Height {
+		y2 = vp.Height
+	}
+
+	r.DrawBox(0, 0, vp.Width, vp.Height, r.styles["view_port"])
+	r.DrawBox(x1, y1, x2, y2, r.styles["background"])
 }
 
 func (r *Render) DrawTanks(g *game.Game, vp *viewport.ViewPort) {
@@ -115,7 +126,7 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 
 	for row := y1; row <= y2; row++ {
 		for col := x1; col <= x2; col++ {
-			r.Screen.SetContent(col, row, '.', nil, style)
+			r.Screen.SetContent(col, row, ' ', nil, style)
 		}
 	}
 }

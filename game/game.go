@@ -193,8 +193,8 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 
 func NewGame(width, height int) *Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
-	myTank.Speed = 30
-	myTank.FireSpeed = 40
+	myTank.Speed = 20
+	myTank.FireSpeed = 30
 	myId := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 
 	tanks := map[string]*Tank{
