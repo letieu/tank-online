@@ -58,7 +58,7 @@ func (c *Client) join() error {
 		}
 	}()
 
-    return c.redisClient.Ping().Err()
+	return c.redisClient.Ping().Err()
 }
 
 func (c *Client) leave() {
@@ -75,10 +75,11 @@ func main() {
 	gameState := game.NewGame(40, 20)
 
 	client := NewClient(gameState)
-    err := client.join()
-    if err != nil {
-        panic(err)
-    }
+	err := client.join()
+	if err != nil {
+		panic(err)
+	}
+	defer client.leave()
 
 	drawler := render.NewRender()
 	go gameState.ListenKeys(drawler.Screen)
@@ -116,8 +117,6 @@ func main() {
 
 		waitForFrame(now)
 	}
-
-	client.leave()
 }
 
 func waitForFrame(startTime time.Time) {
