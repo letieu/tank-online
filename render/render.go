@@ -112,6 +112,9 @@ func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 func (r *Render) DrawBullets(g *game.Game, vp *viewport.ViewPort) {
 	for _, bullet := range g.Bullets {
 		x, y := vp.Translate(bullet.Pos.X, bullet.Pos.Y)
+        if x > vp.Width || y > vp.Height {
+            continue
+        }
 		r.Screen.SetContent(x, y, '⬤', nil, r.styles["bullet"])
 	}
 }

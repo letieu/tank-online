@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	gameState := game.NewGame(50, 30)
+	gameState := game.NewGame(100, 30)
 
 	client := client.NewClient(gameState)
 	err := client.Join()
@@ -20,12 +20,9 @@ func main() {
 	defer client.Leave()
 
 	drawler := render.NewRender()
-	go gameState.ListenKeys(drawler.Screen)
+	viewPort := viewport.NewViewPort(drawler.Screen)
 
-	viewPort := viewport.ViewPort{
-		Width:  40,
-		Height: 20,
-	}
+	go gameState.ListenKeys(drawler.Screen)
 
 	for {
 		drawler.ClearScreen()
@@ -47,9 +44,9 @@ func main() {
 		gameState.Tick()
 		viewPort.Move(gameState)
 
-		drawler.DrawBackground(gameState, &viewPort)
-		drawler.DrawTanks(gameState, &viewPort)
-		drawler.DrawBullets(gameState, &viewPort)
+		drawler.DrawBackground(gameState, viewPort)
+		drawler.DrawTanks(gameState, viewPort)
+		drawler.DrawBullets(gameState, viewPort)
 		drawler.DrawScores(gameState)
 		drawler.ShowScreen()
 
