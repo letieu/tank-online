@@ -2,6 +2,8 @@ package render
 
 import (
 	"tieu/learn/tank/game"
+	"tieu/learn/tank/viewport"
+
 	"github.com/gdamore/tcell"
 )
 
@@ -42,6 +44,7 @@ func NewRender() *Render {
 		"enemy_tank": tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color50),
 		"bullet":     tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.Color122),
 		"score":      tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed),
+		"view_port":  tcell.StyleDefault.Background(tcell.Color88).Foreground(tcell.ColorRed),
 	}
 
 	screen, err := tcell.NewScreen()
@@ -59,16 +62,19 @@ func NewRender() *Render {
 	return &Render{Screen: screen, styles: styles, Width: width, Height: height}
 }
 
-func (r *Render) DrawBackground(g *game.Game) {
-	r.DrawBox(0, 0, g.Width, g.Height, r.styles["background"])
+func (r *Render) DrawBackground(g *game.Game, vp *viewport.ViewPort) {
+	x, y := vp.Translate(0, 0)
+	r.DrawBox(x, y, x + g.Width, y + g.Height, r.styles["background"])
+
+	// r.DrawBox(0, 0, vp.Width, vp.Height, r.styles["view_port"])
 }
 
-func (r *Render) DrawTanks(g *game.Game) {
+func (r *Render) DrawTanks(g *game.Game, vp *viewport.ViewPort) {
 	for id, tank := range g.Tanks {
 		if id == g.MyTank {
-			r.drawTank(tank, "my_tank")
+			r.drawTank(tank, "my_tank", vp)
 		} else {
-			r.drawTank(tank, "enemy_tank")
+			r.drawTank(tank, "enemy_tank", vp)
 		}
 	}
 }
@@ -80,10 +86,10 @@ func (r *Render) DrawEnd(g *game.Game) {
 	r.DrawText(r.Width/2-5, r.Height/2, "You are dead!", r.styles["score"])
 }
 
-func (r *Render) drawTank(t *game.Tank, style string) {
+func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 	var tankSprite [3][3]rune = tankSprites[t.Direction]
 
-	x, y := t.Pos.X, t.Pos.Y
+	x, y := vp.Translate(t.Pos.X, t.Pos.Y)
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
 			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles[style])
@@ -92,9 +98,10 @@ func (r *Render) drawTank(t *game.Tank, style string) {
 
 }
 
-func (r *Render) DrawBullets(g *game.Game) {
+func (r *Render) DrawBullets(g *game.Game, vp *viewport.ViewPort) {
 	for _, bullet := range g.Bullets {
-		r.Screen.SetContent(bullet.Pos.X, bullet.Pos.Y, '⬤', nil, r.styles["bullet"])
+		x, y := vp.Translate(bullet.Pos.X, bullet.Pos.Y)
+		r.Screen.SetContent(x, y, '⬤', nil, r.styles["bullet"])
 	}
 }
 
@@ -108,7 +115,7 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 
 	for row := y1; row <= y2; row++ {
 		for col := x1; col <= x2; col++ {
-			r.Screen.SetContent(col, row, ' ', nil, style)
+			r.Screen.SetContent(col, row, '.', nil, style)
 		}
 	}
 }

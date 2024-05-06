@@ -8,5 +8,6 @@ A simple tank game just for learn golang
 - [X] Play tank inside terminal
 - [x] Multiple player
 - [ ] View port
+- [ ] Update project structure
 - [ ] Leader board
 - [ ] Configurable via UI (Charm)

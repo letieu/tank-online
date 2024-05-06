@@ -256,6 +256,10 @@ func (g *Game) HandleRemoteState(s SyncState) {
 	}
 }
 
+func (g *Game) GetMyTank() *Tank {
+    return g.Tanks[g.MyTank]
+}
+
 type SyncState struct {
 	Id                  string
 	Pos                 Pos

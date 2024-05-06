@@ -5,6 +5,7 @@ import (
 	"os"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/render"
+	"tieu/learn/tank/viewport"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -31,7 +32,7 @@ func NewClient(g *game.Game) *Client {
 	}
 }
 
-func (c *Client) join() {
+func (c *Client) join() error {
 	pubsub := c.redisClient.Subscribe("default")
 	ch := pubsub.Channel()
 
@@ -56,6 +57,8 @@ func (c *Client) join() {
 			c.game.HandleRemoteState(state)
 		}
 	}()
+
+    return c.redisClient.Ping().Err()
 }
 
 func (c *Client) leave() {
@@ -69,43 +72,52 @@ func (c *Client) leave() {
 }
 
 func main() {
-	render := render.NewRender()
+	gameState := game.NewGame(40, 20)
 
-	g := game.NewGame(20, 20)
-	c := NewClient(g)
+	client := NewClient(gameState)
+    err := client.join()
+    if err != nil {
+        panic(err)
+    }
 
-	go g.ListenKeys(render.Screen)
-	c.join()
+	drawler := render.NewRender()
+	go gameState.ListenKeys(drawler.Screen)
+
+	viewPort := viewport.ViewPort{
+		Width:  50,
+		Height: 30,
+	}
 
 	for {
 		now := time.Now()
 
-		c.sendStateCh <- g.GetSyncState()
+		client.sendStateCh <- gameState.GetSyncState()
 
-		render.ClearScreen()
-		if g.Dead {
-			render.DrawEnd(g)
-			render.ShowScreen()
+		if gameState.Dead {
+			drawler.DrawEnd(gameState)
+			drawler.ShowScreen()
 			break
 		}
 
-		if g.Quit {
+		if gameState.Quit {
 			os.Exit(0)
 			break
 		}
 
-		render.DrawBackground(g)
-		g.Tick()
+		gameState.Tick()
+		viewPort.Move(gameState)
 
-		render.DrawTanks(g)
-		render.DrawBullets(g)
-		render.DrawScores(g)
-		render.ShowScreen()
+		drawler.ClearScreen()
+		drawler.DrawBackground(gameState, &viewPort)
+		drawler.DrawTanks(gameState, &viewPort)
+		drawler.DrawBullets(gameState, &viewPort)
+		drawler.DrawScores(gameState)
+		drawler.ShowScreen()
 
 		waitForFrame(now)
 	}
 
-	c.leave()
+	client.leave()
 }
 
 func waitForFrame(startTime time.Time) {
