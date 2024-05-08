@@ -98,10 +98,15 @@ func (r *Render) drawTanks(g *game.Game, vp *viewport.ViewPort) {
 }
 
 func (r *Render) drawScores(g *game.Game) {
+	// y := 0
+	// for _, t := range g.Tanks {
+	// 	r.drawText(1, y, t.Name, r.styles["score"])
+	// 	y++
+	// }
 }
 
 func (r *Render) DrawEnd(g *game.Game) {
-	r.DrawText(r.width/2-5, r.height/2, "You are dead!", r.styles["score"])
+	r.drawText(r.width/2-5, r.height/2, "You are dead!", r.styles["score"])
 }
 
 func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
@@ -113,12 +118,16 @@ func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 		return
 	}
 
+	// r.Screen.SetContent(x, y-2, 'N', nil, r.styles[style])
+
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
 			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles[style])
 		}
 	}
 
+	shortName := t.Name
+	r.drawText(x-1, y-2, shortName, r.styles[style])
 }
 
 func (r *Render) drawBullets(g *game.Game, vp *viewport.ViewPort) {
@@ -146,7 +155,7 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 	}
 }
 
-func (r *Render) DrawText(x, y int, text string, style tcell.Style) {
+func (r *Render) drawText(x, y int, text string, style tcell.Style) {
 	for i, c := range text {
 		r.Screen.SetContent(x+i, y, c, nil, style)
 	}

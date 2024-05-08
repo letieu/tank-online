@@ -62,6 +62,7 @@ type Tank struct {
 	Speed               int
 	FramesUntilNextMove int
 	FireSpeed           int
+	Name                string
 }
 
 func (t *Tank) move(width, height int) {
@@ -191,17 +192,25 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 	}
 }
 
-func NewGame(boardWidth, boardHeight int) *Game {
+func NewGame(boardWidth, boardHeight int, name string) *Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
 	myTank.Speed = 20
 	myTank.FireSpeed = 30
+	myTank.Name = name
+
 	myId := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 
 	tanks := map[string]*Tank{
 		myId: myTank,
 	}
 
-	game := Game{MyTank: myId, Width: boardWidth, Height: boardHeight, Tanks: tanks, Quit: false}
+	game := Game{
+		MyTank:      myId,
+		Width:       boardWidth,
+		Height:      boardHeight,
+		Tanks:       tanks,
+		Quit:        false,
+	}
 
 	return &game
 }
@@ -253,6 +262,7 @@ func (g *Game) HandleRemoteState(s SyncState) {
 		Speed:               s.Speed,
 		FramesUntilNextMove: s.FramesUntilNextMove,
 		FireSpeed:           s.FireSpeed,
+		Name:                s.Name,
 	}
 }
 
@@ -262,6 +272,7 @@ func (g *Game) GetMyTank() *Tank {
 
 type SyncState struct {
 	Id                  string
+	Name                string
 	Pos                 Pos
 	Direction           int
 	Fire                bool
@@ -283,6 +294,7 @@ func (g *Game) GetSyncState() SyncState {
 		FramesUntilNextMove: myTank.FramesUntilNextMove,
 		FireSpeed:           myTank.FireSpeed,
 		Dead:                g.Dead,
+		Name:                myTank.Name,
 	}
 
 	return syncState

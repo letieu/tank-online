@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"tieu/learn/tank/client"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/render"
@@ -8,8 +9,13 @@ import (
 	"time"
 )
 
+var name string
+
 func main() {
-	gameState := game.NewGame(100, 30)
+	flag.StringVar(&name, "name", "Tank", "Name of your tank")
+    flag.Parse()
+
+	gameState := game.NewGame(100, 30, name)
 
 	client := client.NewClient(gameState)
 	err := client.Join()
