@@ -23,10 +23,10 @@ func NewClient(g *game.Game) *Client {
 	sendStateCh := make(chan game.SyncState)
 
 	return &Client{
-		game:        g,
-		redisClient: redisClient,
-		sendStateCh: sendStateCh,
-        newTankStates: make(map[string]game.SyncState),
+		game:          g,
+		redisClient:   redisClient,
+		sendStateCh:   sendStateCh,
+		newTankStates: make(map[string]game.SyncState),
 	}
 }
 
@@ -64,6 +64,7 @@ func (c *Client) Join() error {
 
 func (c *Client) Leave() {
 	err := c.redisClient.Publish("default", game.SyncState{
+		Id:   c.game.MyTank,
 		Dead: true,
 	}).Err()
 
