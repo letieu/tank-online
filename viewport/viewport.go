@@ -2,8 +2,6 @@ package viewport
 
 import (
 	"tieu/learn/tank/game"
-
-	"github.com/gdamore/tcell/v2"
 )
 
 type ViewPort struct {
@@ -34,12 +32,11 @@ func (v *ViewPort) Translate(x, y int) (int, int) {
 	return viewX, viewY
 }
 
-func NewViewPort(screen tcell.Screen) *ViewPort {
+func NewViewPort(screenW, screenH int) *ViewPort {
 	vp := &ViewPort{
 		Width:  80,
 		Height: 30,
 	}
-	screenW, screenH := screen.Size()
 
 	if screenW < vp.Width {
 		vp.Width = screenW

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"tieu/learn/tank/client"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/render"
@@ -21,7 +20,8 @@ func main() {
 
 	drawler := render.NewRender()
 
-	viewPort := viewport.NewViewPort(drawler.Screen)
+	screenW, screenH := drawler.Screen.Size()
+	viewPort := viewport.NewViewPort(screenW, screenH)
 
 	go gameState.ListenKeys(drawler.Screen)
 
@@ -30,31 +30,22 @@ func main() {
 		now := time.Now()
 
 		client.SendState()
-        client.UpdateState()
+		client.UpdateState()
 
-		if gameState.Dead {
-			drawler.DrawEnd(gameState)
-			drawler.ShowScreen()
-			break
-		}
-
-		if gameState.Quit {
-			drawler.Screen.Fini()
-			os.Exit(0)
+		if gameState.Dead || gameState.Quit {
 			break
 		}
 
 		gameState.Tick()
 		viewPort.Move(gameState)
-
-		drawler.DrawBackground(gameState, viewPort)
-		drawler.DrawTanks(gameState, viewPort)
-		drawler.DrawBullets(gameState, viewPort)
-		drawler.DrawScores(gameState)
-		drawler.ShowScreen()
+		drawler.DrawGame(gameState, viewPort)
 
 		waitForFrame(now)
+		drawler.ShowScreen()
 	}
+
+	drawler.DrawEnd(gameState)
+	drawler.ShowScreen()
 }
 
 func waitForFrame(startTime time.Time) {

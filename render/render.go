@@ -32,8 +32,8 @@ var tankSprites = map[int][3][3]rune{
 type Render struct {
 	Screen tcell.Screen
 	styles map[string]tcell.Style
-	Width  int
-	Height int
+	width  int
+	height int
 }
 
 func NewRender() *Render {
@@ -61,10 +61,17 @@ func NewRender() *Render {
 
 	width, height := screen.Size()
 
-	return &Render{Screen: screen, styles: styles, Width: width, Height: height}
+	return &Render{Screen: screen, styles: styles, width: width, height: height}
 }
 
-func (r *Render) DrawBackground(g *game.Game, vp *viewport.ViewPort) {
+func (r *Render) DrawGame(g *game.Game, vp *viewport.ViewPort) {
+	r.drawBackground(g, vp)
+	r.drawTanks(g, vp)
+	r.drawBullets(g, vp)
+	r.drawScores(g)
+}
+
+func (r *Render) drawBackground(g *game.Game, vp *viewport.ViewPort) {
 	x1, y1 := vp.Translate(0, 0)
 	x2, y2 := vp.Translate(g.Width, g.Height)
 
@@ -80,7 +87,7 @@ func (r *Render) DrawBackground(g *game.Game, vp *viewport.ViewPort) {
 	r.DrawBox(x1, y1, x2, y2, r.styles["background"])
 }
 
-func (r *Render) DrawTanks(g *game.Game, vp *viewport.ViewPort) {
+func (r *Render) drawTanks(g *game.Game, vp *viewport.ViewPort) {
 	for id, tank := range g.Tanks {
 		if id == g.MyTank {
 			r.drawTank(tank, "my_tank", vp)
@@ -90,11 +97,11 @@ func (r *Render) DrawTanks(g *game.Game, vp *viewport.ViewPort) {
 	}
 }
 
-func (r *Render) DrawScores(g *game.Game) {
+func (r *Render) drawScores(g *game.Game) {
 }
 
 func (r *Render) DrawEnd(g *game.Game) {
-	r.DrawText(r.Width/2-5, r.Height/2, "You are dead!", r.styles["score"])
+	r.DrawText(r.width/2-5, r.height/2, "You are dead!", r.styles["score"])
 }
 
 func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
@@ -114,7 +121,7 @@ func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 
 }
 
-func (r *Render) DrawBullets(g *game.Game, vp *viewport.ViewPort) {
+func (r *Render) drawBullets(g *game.Game, vp *viewport.ViewPort) {
 	for _, bullet := range g.Bullets {
 		x, y := vp.Translate(bullet.Pos.X, bullet.Pos.Y)
 		if x > vp.Width || y > vp.Height {

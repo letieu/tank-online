@@ -191,7 +191,7 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 	}
 }
 
-func NewGame(width, height int) *Game {
+func NewGame(boardWidth, boardHeight int) *Game {
 	myTank := &Tank{Pos: &Pos{X: 5, Y: 5}, Direction: Up}
 	myTank.Speed = 20
 	myTank.FireSpeed = 30
@@ -201,7 +201,7 @@ func NewGame(width, height int) *Game {
 		myId: myTank,
 	}
 
-	game := Game{MyTank: myId, Width: width, Height: height, Tanks: tanks, Quit: false}
+	game := Game{MyTank: myId, Width: boardWidth, Height: boardHeight, Tanks: tanks, Quit: false}
 
 	return &game
 }
