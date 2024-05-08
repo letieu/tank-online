@@ -3,7 +3,7 @@ package viewport
 import (
 	"tieu/learn/tank/game"
 
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 )
 
 type ViewPort struct {

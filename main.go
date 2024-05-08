@@ -20,6 +20,7 @@ func main() {
 	defer client.Leave()
 
 	drawler := render.NewRender()
+
 	viewPort := viewport.NewViewPort(drawler.Screen)
 
 	go gameState.ListenKeys(drawler.Screen)
@@ -27,7 +28,9 @@ func main() {
 	for {
 		drawler.ClearScreen()
 		now := time.Now()
+
 		client.SendState()
+        client.UpdateState()
 
 		if gameState.Dead {
 			drawler.DrawEnd(gameState)

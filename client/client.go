@@ -8,9 +8,10 @@ import (
 )
 
 type Client struct {
-	game        *game.Game
-	redisClient *redis.Client
-	sendStateCh chan game.SyncState
+	game          *game.Game
+	redisClient   *redis.Client
+	sendStateCh   chan game.SyncState
+	newTankStates map[string]game.SyncState
 }
 
 func NewClient(g *game.Game) *Client {
@@ -25,6 +26,7 @@ func NewClient(g *game.Game) *Client {
 		game:        g,
 		redisClient: redisClient,
 		sendStateCh: sendStateCh,
+        newTankStates: make(map[string]game.SyncState),
 	}
 }
 
@@ -34,9 +36,12 @@ func (c *Client) Join() error {
 
 	go func() {
 		for {
-			e := c.redisClient.Publish("default", <-c.sendStateCh).Err()
-			if e != nil {
-				fmt.Println(e)
+			state, ok := <-c.sendStateCh
+			if ok == true {
+				e := c.redisClient.Publish("default", state).Err()
+				if e != nil {
+					fmt.Println(e)
+				}
 			}
 		}
 	}()
@@ -50,7 +55,7 @@ func (c *Client) Join() error {
 				continue
 			}
 
-			c.game.HandleRemoteState(state)
+			c.newTankStates[state.Id] = state
 		}
 	}()
 
@@ -70,4 +75,10 @@ func (c *Client) Leave() {
 func (c *Client) SendState() {
 	state := c.game.GetSyncState()
 	c.sendStateCh <- state
+}
+
+func (c *Client) UpdateState() {
+	for _, v := range c.newTankStates {
+		c.game.HandleRemoteState(v)
+	}
 }

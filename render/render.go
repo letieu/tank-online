@@ -1,10 +1,9 @@
 package render
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"tieu/learn/tank/game"
 	"tieu/learn/tank/viewport"
-
-	"github.com/gdamore/tcell"
 )
 
 var tankSprites = map[int][3][3]rune{
@@ -46,10 +45,11 @@ func NewRender() *Render {
 		"enemy_tank": tcell.StyleDefault.Background(background).Foreground(tcell.Color50),
 		"bullet":     tcell.StyleDefault.Background(background).Foreground(tcell.Color122),
 		"score":      tcell.StyleDefault.Background(background).Foreground(tcell.ColorRed),
-		"view_port":  tcell.StyleDefault.Background(tcell.Color88).Foreground(tcell.ColorRed),
+		"view_port":  tcell.StyleDefault.Background(tcell.Color88).Foreground(tcell.Color106),
 	}
 
 	screen, err := tcell.NewScreen()
+	screen.Clear()
 
 	if err != nil {
 		panic(err)
@@ -101,6 +101,11 @@ func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 	var tankSprite [3][3]rune = tankSprites[t.Direction]
 
 	x, y := vp.Translate(t.Pos.X, t.Pos.Y)
+
+	if x > vp.Width || y > vp.Height {
+		return
+	}
+
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
 			r.Screen.SetContent(x+i-1, y+j-1, tankSprite[i][j], nil, r.styles[style])
@@ -112,9 +117,9 @@ func (r *Render) drawTank(t *game.Tank, style string, vp *viewport.ViewPort) {
 func (r *Render) DrawBullets(g *game.Game, vp *viewport.ViewPort) {
 	for _, bullet := range g.Bullets {
 		x, y := vp.Translate(bullet.Pos.X, bullet.Pos.Y)
-        if x > vp.Width || y > vp.Height {
-            continue
-        }
+		if x > vp.Width || y > vp.Height {
+			continue
+		}
 		r.Screen.SetContent(x, y, '⬤', nil, r.styles["bullet"])
 	}
 }
@@ -129,7 +134,7 @@ func (r *Render) DrawBox(x1, y1, x2, y2 int, style tcell.Style) {
 
 	for row := y1; row <= y2; row++ {
 		for col := x1; col <= x2; col++ {
-			r.Screen.SetContent(col, row, ' ', nil, style)
+			r.Screen.SetContent(col, row, '-', nil, style)
 		}
 	}
 }

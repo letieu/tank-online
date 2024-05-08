@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 )
 
 const (
@@ -187,7 +187,7 @@ func (g *Game) ListenKeys(screen tcell.Screen) {
 		myTank.Direction = direction
 		myTank.Fire = fire
 
-		g.Tanks[g.MyTank] = myTank
+		g.Tanks[g.MyTank] = myTank // FIXME: update state
 	}
 }
 
@@ -257,7 +257,7 @@ func (g *Game) HandleRemoteState(s SyncState) {
 }
 
 func (g *Game) GetMyTank() *Tank {
-    return g.Tanks[g.MyTank]
+	return g.Tanks[g.MyTank]
 }
 
 type SyncState struct {
