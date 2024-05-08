@@ -3,7 +3,7 @@
 - A simple tank game just for learn golang
 - Use redis as game server
 
-![image](https://github.com/letieu/tank-online/assets/53562817/411940e2-9f43-48f7-9bae-1e8dc3817cb3)
+![image](https://github.com/letieu/tank-online/assets/53562817/4aeffbc2-a13d-464f-b07e-2a62acf76cb4)
 
 ## Usage
 
