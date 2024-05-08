@@ -14,10 +14,10 @@ type Client struct {
 	newTankStates map[string]game.SyncState
 }
 
-func NewClient(g *game.Game) *Client {
+func NewClient(g *game.Game, redisAddr string, redisPass string) *Client {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "secret",
+		Addr:     redisAddr,
+		Password: redisPass,
 	})
 
 	sendStateCh := make(chan game.SyncState)

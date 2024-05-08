@@ -10,14 +10,18 @@ import (
 )
 
 var name string
+var host string
+var pass string
 
 func main() {
 	flag.StringVar(&name, "name", "Tank", "Name of your tank")
-    flag.Parse()
+	flag.StringVar(&host, "host", "localhost:6379", "Redis host")
+	flag.StringVar(&pass, "pass", "secret", "Redis password")
+	flag.Parse()
 
 	gameState := game.NewGame(100, 30, name)
 
-	client := client.NewClient(gameState)
+	client := client.NewClient(gameState, host, pass)
 	err := client.Join()
 	if err != nil {
 		panic(err)
