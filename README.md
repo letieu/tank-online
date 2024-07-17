@@ -23,3 +23,4 @@ docker run --name redis -p 6379:6379 -e REDIS_PASSWORD=secret bitnami/redis:late
 - [x] View port
 - [ ] Leader board
 - [ ] Configurable via UI (Charm)
+- [ ] Play via SSH with wish
